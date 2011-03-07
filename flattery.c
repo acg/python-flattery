@@ -95,15 +95,16 @@ unflatten(PyObject *ignore, PyObject *args)
           Py_XDECREF(extended);
         }
 
-        /* Don't clobber an existing entry. */
+        /* Don't clobber an existing entry.
+           PyXXX_SetItem(..., slotvalue) steals a reference to slotvalue. */
 
         PyObject *extant = NULL;
 
         if ((extant = PyList_GetItem(slot, index)) == Py_None)
           PyList_SetItem(slot, index, slotvalue);
         else {
+          Py_DECREF(slotvalue);
           slotvalue = extant;
-          Py_INCREF(slotvalue);
         }
       }
       else
@@ -113,20 +114,22 @@ unflatten(PyObject *ignore, PyObject *args)
         if (!PyDict_Check(slot))
           goto error;
 
-        /* Don't clobber an existing entry. */
+        /* Don't clobber an existing entry.
+           PyXXX_SetItem(..., slotvalue) steals a reference to slotvalue. */
 
         PyObject *extant = NULL;
 
         if (!(extant = PyDict_GetItem(slot, part)))
           PyDict_SetItem(slot, part, slotvalue);
         else {
+          Py_DECREF(slotvalue);
           slotvalue = extant;
-          Py_INCREF(slotvalue);
         }
       }
 
       /* Descend further into the dst data structure. */
 
+      Py_INCREF(slotvalue);
       Py_DECREF(slot);
       slot = slotvalue;
       slotvalue = NULL;
@@ -171,7 +174,7 @@ static PyMethodDef flattery_methods[] = {
   {NULL, NULL}    /* sentinel */
 };
 
-PyDoc_STRVAR(module_doc, "Flattery: flatten and unflatten nested data structures.");
+PyDoc_STRVAR(module_doc, "Flattery: fast flattening and unflattening of nested data structures.");
 
 /* Initialization function for the module (*must* be called initcext) */
 
