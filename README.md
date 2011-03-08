@@ -1,10 +1,10 @@
-# flattery: fast flattening and unflattening of nested Python data structures #
+# flattery: fast flattening and unflattening of nested Python data #
 
 This library exposes a fast C implementation for flattening and unflattening hierarchical Python data structures. A unit test suite is included.
 
 ## Examples ##
 
-Synopsis:
+### Synopsis ###
 
     from flattery import flatten, unflatten
     data = { "x.y.0", "zero", "x.y.1": "one", "x.z" : 42 }
@@ -14,7 +14,7 @@ Synopsis:
     >>>
     assert( data == flatten(unflatten(data)) )
 
-Processing hierarchical records:
+### Processing hierarchical records ###
 
     from flattery import unflatten
     cols = [ "time", "request.method", "request.uri", "response.status", "response.size" ]
@@ -29,6 +29,8 @@ Processing hierarchical records:
       'request': { 'method': 'GET', 'uri': '/stuff/' },
       'response': { 'status': '200', 'size': '40391' } }
     ...
+
+### Web form processing: grouping data ###
 
 Or suppose you have a web form for collecting several distinct blobs of data at once, like a payment form:
 
@@ -69,6 +71,8 @@ In the form processing code, you can expand the key value form data pairs into a
           'ccyear' : '2020' } }
 
 (Be careful with multiply-valued form data.)
+
+### Web form processing: tabular data ###
 
 Another web example, where a user is editing tabular data\*:
 
