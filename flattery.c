@@ -153,24 +153,127 @@ error:
   Py_XDECREF(slotvalue);
   Py_XDECREF(part);
 
-  Py_INCREF(Py_None);
-  return Py_None;
+  return NULL;
+}
+
+
+static PyObject *
+flatten_internal(PyObject *src)
+{
+  PyObject *flat = NULL;
+  PyObject *dst = NULL;
+
+  if (PyList_Check(src))
+  {
+    if (!(flat = PyDict_New()))
+      goto error;
+
+    /* Iterate through elements in the list src, recursively flattening.
+       Skip any entries which are None -- use a sparse encoding. */
+
+    Py_ssize_t i;
+    Py_ssize_t len = PyList_Size(src);
+
+    for (i=0; i<len; i++)
+    {
+      PyObject *elem = PyList_GetItem(src,i);
+      if (elem == Py_None && i<len-1) continue;
+      Py_INCREF(elem);
+      PyObject *o = flatten_internal(elem);
+      Py_DECREF(elem);
+      PyObject *k = PyString_FromFormat("%zd",i);
+      PyDict_SetItem(flat, k, o);
+    }
+  }
+  else if (PyDict_Check(src))
+  {
+    if (!(flat = PyDict_New()))
+      goto error;
+
+    /* Iterate through pairs in the dict src, recursively flattening. */
+
+    PyObject *k, *v;
+    Py_ssize_t pos = 0;
+
+    while (PyDict_Next(src, &pos, &k, &v))
+    {
+      Py_INCREF(v);
+      PyObject *o = flatten_internal(v);
+      Py_DECREF(v);
+      PyDict_SetItem(flat, k, o);
+      Py_INCREF(k);
+    }
+  }
+  else
+  {
+    /* The Python object is a scalar or something we don't know how
+       to flatten, return it as-is. */
+
+    return src;
+  }
+
+  /* Roll up recursively flattened dictionaries. */
+
+  if (!(dst = PyDict_New()))
+    goto error;
+
+  PyObject *k1, *v1;
+  Py_ssize_t pos1 = 0;
+
+  while (PyDict_Next(flat, &pos1, &k1, &v1))
+  {
+    if (PyDict_Check(v1))
+    {
+      PyObject *k2, *v2;
+      Py_ssize_t pos2 = 0;
+
+      while (PyDict_Next(v1, &pos2, &k2, &v2))
+      {
+        const char *k1c = PyString_AsString(k1);
+        const char *k2c = PyString_AsString(k2);
+        PyObject *k = PyString_FromFormat("%s.%s",k1c,k2c);
+        PyDict_SetItem(dst, k, v2);
+        Py_INCREF(v2);
+      }
+    }
+    else
+    {
+      PyDict_SetItem(dst, k1, v1);
+      Py_INCREF(k1);
+      Py_INCREF(v1);
+    }
+  }
+
+  Py_DECREF(flat);
+
+  return dst;
+
+error:
+
+  Py_XDECREF(dst);
+  Py_XDECREF(flat);
+
+  return NULL;
 }
 
 
 static PyObject *
 flatten(PyObject *ignore, PyObject *args)
 {
-  Py_INCREF(Py_None);
-  return Py_None;
+  PyObject *src = NULL;
+
+  if (!PyArg_ParseTuple(args, "O!:flatten", &PyDict_Type, &src))
+    return NULL;
+
+  return flatten_internal(src);
 }
 
 
 /* List of free functions defined in the module */
 
 static PyMethodDef flattery_methods[] = {
-  {"unflatten", unflatten, METH_VARARGS, "unflatten"},
-  {"flatten", flatten, METH_VARARGS, "flatten"},
+  {"unflatten", unflatten, METH_VARARGS, "unflatten(dict) -> dict"},
+  {"flatten", flatten, METH_VARARGS, "flatten(dict) -> dict"},
   {NULL, NULL}    /* sentinel */
 };
 
