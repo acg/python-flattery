@@ -1,6 +1,4 @@
-# flattery #
-
-## fast flattening and unflattening of nested Python data ##
+# flattery - fast flattening and unflattening of nested Python data #
 
 This library exposes a fast C implementation for flattening and unflattening hierarchical Python data structures. A unit test suite is included.
 
