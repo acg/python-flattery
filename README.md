@@ -1,4 +1,6 @@
-# flattery: fast flattening and unflattening of nested Python data #
+# flattery #
+
+## fast flattening and unflattening of nested Python data ##
 
 This library exposes a fast C implementation for flattening and unflattening hierarchical Python data structures. A unit test suite is included.
 
@@ -103,7 +105,7 @@ Another web example, where a user is editing tabular data\*:
       </div>
     </form>
 
-(You should validate that indices are below some reasonable limit to avoid a memory DoS.)
+(You should validate that the embedded indices are below some reasonable limit to avoid a memory DoS.)
 
 In the form processing code:
 
