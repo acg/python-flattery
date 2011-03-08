@@ -1,0 +1,16 @@
+Source: python-flattery
+Section: admin
+Priority: extra
+Maintainer: Alan Grow <alangrow+flattery@gmail.com>
+Build-depends: debhelper (>= 7), python-support
+Standards-Version: 0.1.0
+Vcs-Git: https://acg@github.com/acg/python-flattery.git
+
+Package: python-flattery
+Architecture: all
+Section: python
+Build-Depends: python-support (>= 1.0.0), python (>= 2.5)
+Depends: ${misc:Depends}, ${python:Depends}, python (>= 2.5)
+Description: fast flattening and unflattening of nested Python data
+  Flattery: fast flattening and unflattening of nested data structures. 
+
