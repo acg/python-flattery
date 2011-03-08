@@ -21,9 +21,9 @@ unflatten(PyObject *ignore, PyObject *args)
 
   /* Create a [None] list. Used for extending lists to higher indices. */
 
-  if (!(nonelist = PyList_New(1)))
+  if (!(nonelist = PyList_New(0)))
     goto error;
-  if (PyList_SetItem(nonelist, 0, Py_None) < 0)
+  if (PyList_Append(nonelist, Py_None) < 0)
     goto error;
 
   /* Iterate through key value pairs in the src dict,
@@ -76,8 +76,7 @@ unflatten(PyObject *ignore, PyObject *args)
 
       if (isdigit(*start))
       {
-        /* If the current path part is numeric, index into a list.
-           Extend the list with [None,None,...] if necessary. */
+        /* If the current path part is numeric, index into a list. */
 
         if (!PyList_Check(slot))
           goto error;
@@ -87,24 +86,29 @@ unflatten(PyObject *ignore, PyObject *args)
         Py_ssize_t len = PyList_Size(slot);
         Py_ssize_t index = atol(PyString_AsString(part));
 
+        /* Extend the list with [None,None,...] if necessary. */
+
         if (index >= len)
         {
           PyObject *tail = PySequence_Repeat(nonelist, index-len+1);
           PyObject *extended = PySequence_InPlaceConcat(slot, tail);
-          Py_XDECREF(tail);
-          Py_XDECREF(extended);
+          Py_DECREF(tail);
+          Py_DECREF(extended);
         }
 
         /* Don't clobber an existing entry.
-           PyXXX_SetItem(..., slotvalue) steals a reference to slotvalue. */
+           Caveat: PyList_SetItem() steals a reference to slotvalue. */
 
         PyObject *extant = NULL;
 
-        if ((extant = PyList_GetItem(slot, index)) == Py_None)
+        if ((extant = PyList_GetItem(slot, index)) == Py_None) {
           PyList_SetItem(slot, index, slotvalue);
+          Py_INCREF(slotvalue);
+        }
         else {
           Py_DECREF(slotvalue);
           slotvalue = extant;
+          Py_INCREF(slotvalue);
         }
       }
       else
@@ -114,8 +118,7 @@ unflatten(PyObject *ignore, PyObject *args)
         if (!PyDict_Check(slot))
           goto error;
 
-        /* Don't clobber an existing entry.
-           PyXXX_SetItem(..., slotvalue) steals a reference to slotvalue. */
+        /* Don't clobber an existing entry. */
 
         PyObject *extant = NULL;
 
@@ -124,12 +127,12 @@ unflatten(PyObject *ignore, PyObject *args)
         else {
           Py_DECREF(slotvalue);
           slotvalue = extant;
+          Py_INCREF(slotvalue);
         }
       }
 
       /* Descend further into the dst data structure. */
 
-      Py_INCREF(slotvalue);
       Py_DECREF(slot);
       slot = slotvalue;
       slotvalue = NULL;
@@ -143,6 +146,7 @@ unflatten(PyObject *ignore, PyObject *args)
     slot = NULL;
   }
 
+  Py_DECREF(nonelist);
   return dst;
 
 error:
@@ -183,6 +187,8 @@ flatten_internal(PyObject *src)
       Py_DECREF(elem);
       PyObject *k = PyString_FromFormat("%zd",i);
       PyDict_SetItem(flat, k, o);
+      Py_DECREF(k);
+      Py_DECREF(o);
     }
   }
   else if (PyDict_Check(src))
@@ -201,7 +207,7 @@ flatten_internal(PyObject *src)
       PyObject *o = flatten_internal(v);
       Py_DECREF(v);
       PyDict_SetItem(flat, k, o);
-      Py_INCREF(k);
+      Py_DECREF(o);
     }
   }
   else
@@ -209,6 +215,7 @@ flatten_internal(PyObject *src)
     /* The Python object is a scalar or something we don't know how
        to flatten, return it as-is. */
 
+    Py_INCREF(src);
     return src;
   }
 
@@ -233,15 +240,11 @@ flatten_internal(PyObject *src)
         const char *k2c = PyString_AsString(k2);
         PyObject *k = PyString_FromFormat("%s.%s",k1c,k2c);
         PyDict_SetItem(dst, k, v2);
-        Py_INCREF(v2);
+        Py_DECREF(k);
       }
     }
     else
-    {
       PyDict_SetItem(dst, k1, v1);
-      Py_INCREF(k1);
-      Py_INCREF(v1);
-    }
   }
 
   Py_DECREF(flat);
