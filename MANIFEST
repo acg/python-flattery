@@ -1,0 +1,16 @@
+build_inplace
+debian/changelog
+debian/compat
+debian/control
+debian/copyright
+debian/rules
+doc/default.css
+doc/pygments.css
+flattery.c
+flattery/__init__.py
+hilite_markdown.py
+LICENSE
+MANIFEST
+README.md
+setup.py
+test.py
