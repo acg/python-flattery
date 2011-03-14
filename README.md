@@ -6,20 +6,37 @@ This library exposes a fast C implementation for flattening and unflattening hie
 
 ### Synopsis ###
 
+    #!/usr/bin/env python
     from flattery import flatten, unflatten
-    data = { "x.y.0", "zero", "x.y.1": "one", "x.z" : 42 }
+
+    data = {
+      "x.y.0", "zero",
+      "x.y.1": "one",
+      "x.z" : 42
+    }
+
     print unflatten(data)
     >>>
-    { 'x' : { 'y' : [ 'zero', 'one' ], 'z': 42 }
-    >>>
+    {
+      'x' : {
+        'y' : [ 'zero', 'one' ],
+        'z': 42
+      }
+    }
+    <<<
+
     assert( data == flatten(unflatten(data)) )
 
 ### Processing hierarchical records ###
 
+    #!/usr/bin/env python
+    import sys
     from flattery import unflatten
+
     cols = [ "time", "request.method", "request.uri", "response.status", "response.size" ]
+
     for line in sys.stdin:
-      fields = line.rstrip('\r\n').split(len(fields)-1)
+      fields = line.rstrip('\r\n').split(len(cols)-1)
       values = dict([(cols[i],fields[i]) for i in xrange(len(cols))])
       record = unflatten(values)
       # do something with the record...
@@ -34,6 +51,7 @@ This library exposes a fast C implementation for flattening and unflattening hie
 
 Or suppose you have a web form for collecting several distinct blobs of data at once, like a payment form:
 
+    #!/usr/bin/html
     <form method="post" action="">
       <div>
         First name: <input type="text" name="contact.firstname" value="" />
@@ -52,9 +70,11 @@ Or suppose you have a web form for collecting several distinct blobs of data at 
       </div>
     </form>
 
-In the form processing code, you can expand the key value form data pairs into a nested object\*:
+In the form processing code, you can expand the key value form data pairs into a nested object:
 
+    #!/usr/bin/env python
     from flattery import unflatten
+
     params = formdata()   # however you get a dictionary of form data...
     data = unflatten(params)
     print data
@@ -70,14 +90,14 @@ In the form processing code, you can expand the key value form data pairs into a
           'ccmonth': '12' ,
           'ccyear' : '2020' } }
 
-(Be careful with multiply-valued form data.)
+(But be careful with multiply-valued form data.)
 
 ### Web form processing: tabular data ###
 
-Another web example, where a user is editing tabular data\*:
+Another web example, where a user is editing tabular data:
 
+    #!/usr/bin/html
     <form method="post" action="">
-
       <div>
         <ul class="table">
           <ul class="row">
@@ -99,7 +119,7 @@ Another web example, where a user is editing tabular data\*:
         </ul>
       </div>
       <div>
-        <in.put type="submit" name="submit" />
+        <input type="submit" name="submit" />
       </div>
     </form>
 
@@ -107,7 +127,9 @@ Another web example, where a user is editing tabular data\*:
 
 In the form processing code:
 
+    #!/usr/bin/env python
     from flattery import unflatten
+
     params = formdata()   # however you get a dictionary of form data...
     data = unflatten(params)
     print data
@@ -135,11 +157,13 @@ In the form processing code:
 
 Ubuntu / Debian users:
 
+    #!/bin/sh
     fakeroot ./debian/rules binary
     dpkg -i ../python-flattery*.deb
 
 If there's no "real" packaging for your system yet:
 
+    #!/bin/sh
     ./setup.py build_ext --inplace
     ./test.py
     ./setup.py build
