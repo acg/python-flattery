@@ -10,7 +10,7 @@ This library exposes a fast C implementation for flattening and unflattening hie
     from flattery import flatten, unflatten
 
     data = {
-      "x.y.0", "zero",
+      "x.y.0": "zero",
       "x.y.1": "one",
       "x.z" : 42
     }
